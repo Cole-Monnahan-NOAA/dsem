@@ -600,6 +600,7 @@ function( object,
   if(ignoreNAs) tsdata[is.na(tsdata)] <- 1
   control = object$internal$control
   control$run_model = FALSE
+  control$quiet = TRUE
 
   # Extract parameters, and add noise as desired
   par_zr = outer( obj$env$last.par.best, rep(1,nsim) )
