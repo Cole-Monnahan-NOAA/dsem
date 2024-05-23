@@ -13,10 +13,10 @@
 #' @param estimate_delta0 Boolean indicating whether to estimate deviations from equilibrium in initial year
 #'        as fixed effects, or alternatively to assume that dynamics start at some stochastic draw away from
 #'        the stationary distribution
-#' @param covs optional: a character vector of one or more elements, with each element giving a string of variable 
-#'        names, separated by commas. Variances and covariances among all variables in each such string are 
-#'        added to the model. Warning: covs="x1, x2" and covs=c("x1", "x2") are not equivalent: 
-#'        covs="x1, x2" specifies the variance of x1, the variance of x2, and their covariance, 
+#' @param covs optional: a character vector of one or more elements, with each element giving a string of variable
+#'        names, separated by commas. Variances and covariances among all variables in each such string are
+#'        added to the model. Warning: covs="x1, x2" and covs=c("x1", "x2") are not equivalent:
+#'        covs="x1, x2" specifies the variance of x1, the variance of x2, and their covariance,
 #'        while covs=c("x1", "x2") specifies the variance of x1 and the variance of x2 but not their covariance.
 #'        These same covariances can be added manually via argument `sem`, but using argument `covs` might
 #'        save time for models with many variables.
@@ -246,14 +246,14 @@ function( sem,
 
     # BUild prior evaluator
     require(RTMB)
-    priors_obj = RTMB::MakeADFun( func = prior_negloglike, 
-                                  parameters = list(par=obj$par), 
+    priors_obj = RTMB::MakeADFun( func = prior_negloglike,
+                                  parameters = list(par=obj$par),
                                   silent = TRUE )
     obj$fn = \(pars) obj$fn_orig(pars) + priors_obj$fn(pars)
     obj$gr = \(pars) obj$gr_orig(pars) + priors_obj$gr(pars)
     internal$priors_obj = priors_obj
   }
-  
+
   # Further bundle
   out = list( "obj"=obj,
               "ram"=ram,
@@ -354,7 +354,7 @@ function( sem,
 #' @param getsd Boolean indicating whether to call \code{\link[TMB]{sdreport}}
 #' @param run_model Boolean indicating whether to estimate parameters (the default), or
 #'        instead to return the model inputs and compiled TMB object without running;
-#' @param gmrf_parameterization Parameterization to use for the Gaussian Markov 
+#' @param gmrf_parameterization Parameterization to use for the Gaussian Markov
 #'        random field, where the default `separable` constructs a precision matrix
 #'        that must be full rank, and the alternative `projection` constructs
 #'        a full-rank and IID precision for variables over time, and then projects
@@ -540,6 +540,11 @@ function( x,
 #'        or include estimation uncertainty in both fixed and random effects
 #' @param resimulate_gmrf whether to resimulate the GMRF based on estimated or
 #'        simulated random effects (determined by argument \code{variance})
+#' @param ignoreNAs Whether to ignore NAs in the data when
+#'   resimulating. If TRUE (the default) the NA values in y_tj
+#'   will still be NA in the simulated data. If FALSE then they
+#'   will be resimulated. The latter case may be useful in
+#'   simulation contexts.
 #' @param seed random seed
 #' @param ... Not used
 #'
@@ -566,6 +571,8 @@ function( object,
           seed = NULL,
           variance = c("none", "random", "both"),
           resimulate_gmrf = FALSE,
+          ignoreNAs=FALSE,
+          full=FALSE,
           ... ){
 
   # Front stuff
@@ -586,6 +593,10 @@ function( object,
   obj = object$obj
   parfull = obj$env$parList()
   tsdata = object$internal$tsdata
+  ## replace NAs with dummy values so they are resimulated
+  if(ignoreNAs) tsdata[is.na(tsdata)] <- 1
+  control = object$internal$control
+  control$run_model = FALSE
 
   # Extract parameters, and add noise as desired
   par_zr = outer( obj$env$last.par.best, rep(1,nsim) )
@@ -619,26 +630,31 @@ function( object,
       # Rebuild model with new GMRF values
       #newcall$control$run_model = FALSE
       #newfit = eval(newcall)
-      control = object$internal$control
       control$parameters = newparfull
       control$parameters$x_tj[] = tmp
-      control$run_model = FALSE
       newfit = dsem( sem = object$internal$sem,
-                     tsdata = object$internal$tsdata,
+                     tsdata = tsdata,
                      family = object$internal$family,
                      estimate_delta0 = object$internal$estimate_delta0,
                      control = control )
       out[[r]] = newfit$obj$simulate()$y_tj
     }else{
-      out[[r]] = obj$simulate( par_zr[,r] )$y_tj
+      newfit = dsem( sem = object$internal$sem,
+                    tsdata = tsdata,
+                    family = object$internal$family,
+                    estimate_delta0 = object$internal$estimate_delta0,
+                    control = control )
+      out[[r]] = newfit$obj$simulate( par_zr[,r] )$y_tj
     }
     colnames(out[[r]]) = colnames(tsdata)
     tsp(out[[r]]) = attr(tsdata,"tsp")
     class(out[[r]]) = class(tsdata)
   }
-
   return(out)
 }
+
+library(dsem)
+
 
 #' @title Extract Variance-Covariance Matrix
 #'
