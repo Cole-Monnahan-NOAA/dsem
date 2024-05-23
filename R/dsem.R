@@ -545,6 +545,9 @@ function( x,
 #'   will still be NA in the simulated data. If FALSE then they
 #'   will be resimulated. The latter case may be useful in
 #'   simulation contexts.
+#' @param full Whether to return only the new data (default) or
+#'   the full list containing parameter and other REPORTed
+#'   outputs.
 #' @param seed random seed
 #' @param ... Not used
 #'
@@ -637,24 +640,22 @@ function( object,
                      family = object$internal$family,
                      estimate_delta0 = object$internal$estimate_delta0,
                      control = control )
-      out[[r]] = newfit$obj$simulate()$y_tj
+      out[[r]] = newfit$obj$simulate(complete=TRUE)
     }else{
       newfit = dsem( sem = object$internal$sem,
                     tsdata = tsdata,
                     family = object$internal$family,
                     estimate_delta0 = object$internal$estimate_delta0,
                     control = control )
-      out[[r]] = newfit$obj$simulate( par_zr[,r] )$y_tj
+      out[[r]] = newfit$obj$simulate( par_zr[,r], complete=TRUE )
     }
-    colnames(out[[r]]) = colnames(tsdata)
-    tsp(out[[r]]) = attr(tsdata,"tsp")
-    class(out[[r]]) = class(tsdata)
+    colnames(out[[r]]$y_tj) = colnames(tsdata)
+    tsp(out[[r]]$y_tj) = attr(tsdata,"tsp")
+    class(out[[r]]$y_tj) = class(tsdata)
+    if(!full) out[[r]] <- out[[r]]$y_tj
   }
   return(out)
 }
-
-library(dsem)
-
 
 #' @title Extract Variance-Covariance Matrix
 #'
