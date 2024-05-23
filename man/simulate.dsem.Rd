@@ -10,6 +10,8 @@
   seed = NULL,
   variance = c("none", "random", "both"),
   resimulate_gmrf = FALSE,
+  ignoreNAs = FALSE,
+  full = FALSE,
   ...
 )
 }
@@ -26,6 +28,16 @@ or include estimation uncertainty in both fixed and random effects}
 
 \item{resimulate_gmrf}{whether to resimulate the GMRF based on estimated or
 simulated random effects (determined by argument \code{variance})}
+
+\item{ignoreNAs}{Whether to ignore NAs in the data when
+resimulating. If TRUE (the default) the NA values in y_tj
+will still be NA in the simulated data. If FALSE then they
+will be resimulated. The latter case may be useful in
+simulation contexts.}
+
+\item{full}{Whether to return only the new data (default) or
+the full list containing parameter and other REPORTed
+outputs.}
 
 \item{...}{Not used}
 }

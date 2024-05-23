@@ -45,7 +45,7 @@ allowed. Passed to `control` in \code{\link[stats]{nlminb}}.}
 \item{run_model}{Boolean indicating whether to estimate parameters (the default), or
 instead to return the model inputs and compiled TMB object without running;}
 
-\item{gmrf_parameterization}{Parameterization to use for the Gaussian Markov 
+\item{gmrf_parameterization}{Parameterization to use for the Gaussian Markov
 random field, where the default `separable` constructs a precision matrix
 that must be full rank, and the alternative `projection` constructs
 a full-rank and IID precision for variables over time, and then projects
